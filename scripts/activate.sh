@@ -20,3 +20,12 @@ fi
 if [ ! -d $DATASET_MOUNT/prolong-ultrachat-64K ]; then
     git clone https://huggingface.co/datasets/princeton-nlp/prolong-ultrachat-64K datasets/prolong-ultrachat-64K
 fi
+
+# Activate the conda environment.
+source /home/$USER/miniconda3/etc/profile.d/conda.sh
+conda activate ProLong
+
+# Use CUDA 11.8 for compatibility with the codebase.
+export CUDA_HOME=/usr/local/cuda-11.8
+export PATH=$CUDA_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
