@@ -4,10 +4,18 @@
 DATASET_LOCAL=/scratch/$USER/ProLong/datasets
 DATASET_MOUNT=$PWD/datasets
 
+# Specify the checkpoints mounting paths.
+CHECKPOINTS_LOCAL=/scratch/$USER/ProLong/checkpoints
+CHECKPOINTS_MOUNT=$PWD/checkpoints
+
 # Mount from local SSD to current workspace.
 mkdir -p $DATASET_LOCAL
 if [ ! -e $DATASET_MOUNT ]; then
     ln -s $DATASET_LOCAL $DATASET_MOUNT
+fi
+mkdir -p $CHECKPOINTS_LOCAL
+if [ ! -e $CHECKPOINTS_MOUNT ]; then
+    ln -s $CHECKPOINTS_LOCAL $CHECKPOINTS_MOUNT
 fi
 
 # Download the datasets if not already present.
