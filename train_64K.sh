@@ -8,6 +8,7 @@
 
 # !!!! Load your own environment here !!!! #
 # !!!! Load your own environment here !!!! #
+source scripts/activate.sh
 
 # Fine-tune from this model 
 model=${MODEL:-meta-llama/Meta-Llama-3-8B-Instruct}
