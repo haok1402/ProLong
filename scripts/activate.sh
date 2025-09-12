@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Activate the conda environment.
-source /home/$USER/miniconda3/etc/profile.d/conda.sh
+source $HOME/miniconda3/etc/profile.d/conda.sh
 conda activate ProLong
 
 # Use CUDA 11.8 for compatibility with the codebase.
@@ -13,7 +13,7 @@ export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 export HF_HUB_CACHE=/data/hf_cache
 
 # Setup directories for datasets and checkpoints.
-DATASET_LOCAL=/scratch/$USER/ProLong/datasets
+DATASET_LOCAL=/data/user_data/$USER/ProLong/datasets
 DATASET_MOUNT=$PWD/datasets
 
 mkdir -p $DATASET_LOCAL
@@ -21,7 +21,7 @@ if [ ! -e $DATASET_MOUNT ]; then
     ln -s $DATASET_LOCAL $DATASET_MOUNT
 fi
 
-CHECKPOINTS_LOCAL=/scratch/$USER/ProLong/checkpoints
+CHECKPOINTS_LOCAL=/data/user_data/$USER/ProLong/checkpoints
 CHECKPOINTS_MOUNT=$PWD/checkpoints
 
 mkdir -p $CHECKPOINTS_LOCAL
