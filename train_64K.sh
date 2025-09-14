@@ -101,7 +101,7 @@ echo "slurm_nodelist=${SLURM_NODELIST} num_nodes=${num_nodes} master_addr=${mast
 export OMP_NUM_THREADS=$num_gpus
 export WANDB_PROJECT="prolong"
 export WANDB_DIR=$out_dir
-export WANDB_MODE="offline" # We turn off wandb online sync by default
+export WANDB_MODE="online" # We turn off wandb online sync by default
 export TOKENIZERS_PARALLELISM=true
 
 
