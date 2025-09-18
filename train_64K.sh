@@ -11,7 +11,7 @@
 source scripts/activate.sh
 
 # Fine-tune from this model 
-model=${MODEL:-meta-llama/Meta-Llama-3-8B-Instruct}
+model=${MODEL:-Qwen/Qwen3-0.6B}
 # Point to the base dir of the ProLong 64K data
 dataset=${DATASET:-"datasets/long-context-65536"}
 
@@ -101,7 +101,7 @@ echo "slurm_nodelist=${SLURM_NODELIST} num_nodes=${num_nodes} master_addr=${mast
 export OMP_NUM_THREADS=$num_gpus
 export WANDB_PROJECT="prolong"
 export WANDB_DIR=$out_dir
-export WANDB_MODE="online" # We turn off wandb online sync by default
+export WANDB_MODE="offline" # We turn off wandb online sync by default
 export TOKENIZERS_PARALLELISM=true
 
 
@@ -170,4 +170,5 @@ done
 base_arguments+=( $@ )
 
 echo command: "${header} ${base_arguments[@]}"
-${header} "${base_arguments[@]}" 2>&1 | tee -a $out_dir/log.out
+# ${header} "${base_arguments[@]}" 2>&1 | tee -a $out_dir/log.out
+${header} "${base_arguments[@]}" 2>&1 | tee $out_dir/log.out

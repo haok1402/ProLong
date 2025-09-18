@@ -21,7 +21,7 @@ if [ ! -e $DATASET_MOUNT ]; then
     ln -s $DATASET_LOCAL $DATASET_MOUNT
 fi
 
-CHECKPOINTS_LOCAL=/data/user_data/$USER/ProLong/checkpoints
+CHECKPOINTS_LOCAL=/scratch/$USER/ProLong/checkpoints
 CHECKPOINTS_MOUNT=$PWD/checkpoints
 
 mkdir -p $CHECKPOINTS_LOCAL

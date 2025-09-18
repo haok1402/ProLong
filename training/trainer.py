@@ -67,14 +67,10 @@ from transformers.utils import (
     get_full_repo_name,
     is_apex_available,
     is_sagemaker_mp_enabled,
-    is_torch_tpu_available,
 )
 from transformers.optimization import get_scheduler
 from transformers import TrainingArguments as HfTrainingArguments
 
-if is_torch_tpu_available(check_device=False):
-    import torch_xla.core.xla_model as xm # type: ignore
-    import torch_xla.distributed.parallel_loader as pl # type: ignore
 
 
 if is_sagemaker_mp_enabled():
@@ -329,7 +325,7 @@ class Trainer(HFTrainer):
 
         return inputs
 
-    def compute_loss(self, model, inputs, return_outputs=False, return_output_and_metrics=False):
+    def compute_loss(self, model, inputs, return_outputs=False, return_output_and_metrics=False, num_items_in_batch=None):
         """
         How the loss is computed by Trainer. By default, all models return the loss in the first element.
 
@@ -337,6 +333,9 @@ class Trainer(HFTrainer):
         """
 
         inputs = self.get_sequence_parallel_inputs(inputs)
+
+        inputs["input_ids"] = inputs["input_ids"].unsqueeze(0) # Add batch dimension
+        inputs["labels"] = inputs["labels"].unsqueeze(0) # Add batch dimension
 
         try:
             outputs = model(**inputs, use_cache=False)
@@ -567,8 +566,6 @@ class Trainer(HFTrainer):
         # Do this before wrapping.
         eval_dataset = getattr(dataloader, "dataset", None)
 
-        if is_torch_tpu_available():
-            dataloader = pl.ParallelLoader(dataloader, [args.device]).per_device_loader(args.device)
 
         if args.past_index >= 0:
             self._past = None
@@ -606,8 +603,6 @@ class Trainer(HFTrainer):
             loss, logits, labels, metrics = self.prediction_step(model, inputs, prediction_loss_only, ignore_keys=ignore_keys)
             inputs_decode = self._prepare_input(inputs["input_ids"]) if args.include_inputs_for_metrics else None
 
-            if is_torch_tpu_available():
-                xm.mark_step()
 
 
             # Update containers on host

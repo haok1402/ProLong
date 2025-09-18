@@ -13,7 +13,7 @@ from transformers import (
     set_seed,
 )
 
-from training.modeling_flash_llama import LlamaForCausalLM
+from training.modeling_flash_qwen3 import Qwen3ForCausalLM
 from training.trainer import Trainer, TrainingArguments
 from training.dataset import build_dataset, DataCollator, DataArguments
 from training.dataset import logger as dataset_logger
@@ -158,7 +158,7 @@ def main():
     config.pad_token_id = 0
 
     if script_args.model_name_or_path:
-        model = LlamaForCausalLM.from_pretrained(
+        model = Qwen3ForCausalLM.from_pretrained(
             script_args.model_name_or_path,
             from_tf=bool(".ckpt" in script_args.model_name_or_path),
             config=config,
@@ -167,8 +167,8 @@ def main():
             use_auth_token=True if script_args.use_auth_token else None,
         )
     else:
-        logger.warning(f"Initializing new LlamaForCausalLM from scratch")
-        model = LlamaForCausalLM(config)
+        logger.warning(f"Initializing new Qwen3ForCausalLM from scratch")
+        model = Qwen3ForCausalLM(config)
 
     if script_args.tokenizer_name is not None and script_args.model_name_or_path != script_args.tokenizer_name:
         model.resize_token_embeddings(len(tokenizer))
