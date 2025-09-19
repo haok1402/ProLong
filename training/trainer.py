@@ -334,9 +334,6 @@ class Trainer(HFTrainer):
 
         inputs = self.get_sequence_parallel_inputs(inputs)
 
-        inputs["input_ids"] = inputs["input_ids"].unsqueeze(0) # Add batch dimension
-        inputs["labels"] = inputs["labels"].unsqueeze(0) # Add batch dimension
-
         try:
             outputs = model(**inputs, use_cache=False)
         except Exception as e:

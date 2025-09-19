@@ -468,6 +468,12 @@ class Qwen3ForCausalLM(Qwen3PreTrainedModel, GenerationMixin):
         "Hey, are you conscious? Can you talk to me?\nI'm not conscious, but I can talk to you."
         ```"""
 
+        # Add the batch dimension. For long-context extension, because the sequence length is quite
+        # long, the batch size is typically set to 1. The original codebase for Llama3 ignores this
+        # dimension when loading the sequence, which is required by Qwen3. We thus add it back here.
+        input_ids = input_ids.unsqueeze(0)
+        labels = labels.unsqueeze(0)
+
         outputs: BaseModelOutputWithPast = self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,
