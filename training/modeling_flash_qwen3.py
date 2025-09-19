@@ -14,9 +14,11 @@
 # limitations under the License.
 """PyTorch Qwen3 model."""
 
+import os
 from typing import Callable, Optional, Union
 
 import torch
+import torch.nn.functional as F
 from torch import nn
 
 from transformers.activations import ACT2FN
@@ -430,6 +432,18 @@ class Qwen3ForCausalLM(Qwen3PreTrainedModel, GenerationMixin):
         # Initialize weights and apply final processing
         self.post_init()
 
+        # Other attributes for long-context extension.
+        self.logit_block_size = int(os.environ.get("LOGIT_BLOCK_SIZE", 0))
+
+    def compute_loss(self, logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+        logits = logits[..., :-1, :]
+        logits = logits.reshape(-1, logits.size(-1))
+        logits = logits.float()
+        labels = labels[..., 1:]
+        labels = labels.reshape(-1)
+        loss = F.cross_entropy(logits, labels, ignore_index=-100, reduction="mean")
+        return loss
+
     @can_return_tuple
     @auto_docstring
     def forward(
@@ -490,13 +504,14 @@ class Qwen3ForCausalLM(Qwen3PreTrainedModel, GenerationMixin):
         slice_indices = slice(-logits_to_keep, None) if isinstance(logits_to_keep, int) else logits_to_keep
         logits = self.lm_head(hidden_states[:, slice_indices, :])
 
-        print("logits.shape: %s, logits.dtype: %s" % (logits.shape, logits.dtype), flush=True)
-
         input("Press Enter to continue...") # Pause execution and inspect the logits
 
         loss = None
         if labels is not None:
             loss = self.loss_function(logits=logits, labels=labels, vocab_size=self.config.vocab_size, **kwargs)
+            print("loss (ref): %s" % loss, flush=True)
+            loss = self.compute_loss(logits, labels)
+            print("loss (new): %s" % loss, flush=True)
 
         input("Press Enter to continue...") # Pause execution before returning
 
