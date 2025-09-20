@@ -28,14 +28,3 @@ mkdir -p $CHECKPOINTS_LOCAL
 if [ ! -e $CHECKPOINTS_MOUNT ]; then
     ln -s $CHECKPOINTS_LOCAL $CHECKPOINTS_MOUNT
 fi
-
-# Download the datasets if not already present.
-if [ ! -d $DATASET_MOUNT/long-context-65536 ]; then
-    hf download --repo-type dataset princeton-nlp/prolong-data-64K --local-dir datasets/long-context-65536
-fi
-if [ ! -d $DATASET_MOUNT/long-context-524288 ]; then
-    hf download --repo-type dataset princeton-nlp/prolong-data-512K --local-dir datasets/long-context-524288
-fi
-if [ ! -d $DATASET_MOUNT/prolong-ultrachat-64K ]; then
-    hf download --repo-type dataset princeton-nlp/prolong-ultrachat-64K --local-dir datasets/prolong-ultrachat-64K
-fi
