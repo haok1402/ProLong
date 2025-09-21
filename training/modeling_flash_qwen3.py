@@ -524,6 +524,8 @@ class Qwen3ForCausalLM(Qwen3PreTrainedModel, GenerationMixin):
             else:
                 loss = self.compute_loss(logits, labels)
 
+        input("after forward, loss: %f" % (loss.item(), )) # Pause execution and inspect the loss.
+
         return CausalLMOutputWithPast(
             loss=loss,
             logits=logits,

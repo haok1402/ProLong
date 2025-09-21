@@ -13,7 +13,7 @@ source scripts/activate.sh
 # Fine-tune from this model 
 model=${MODEL:-Qwen/Qwen3-0.6B}
 # Point to the base dir of the ProLong 64K data
-dataset=${DATASET:-"datasets/long-context-65536"}
+dataset=${DATASET:-"datasets/Qwen3/long-context-65536"}
 
 # Directories in the dataset root folder where @ is followed by the mixing proportion 
 domains=(
