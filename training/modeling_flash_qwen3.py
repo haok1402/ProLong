@@ -523,7 +523,7 @@ class Qwen3ForCausalLM(Qwen3PreTrainedModel, GenerationMixin):
                 for logits_block, labels_block in zip(logits_blocks, labels_blocks):
                     block_valid_labbels = (labels_block != -100).sum()
                     weight = block_valid_labbels / valid_labels
-                    loss = loss + weight * self.compute_loss(logits_block, labels_block)
+                    loss = loss + weight * torch.utils.checkpoint.checkpoint(self.compute_loss, logits_block, labels_block, use_reentrant=False)
                 print("loss (new-1): %s" % loss, flush=True)
                 input("Press Enter to continue...") # Pause execution and inspect the loss after block-wise computation
 
