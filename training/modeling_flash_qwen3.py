@@ -434,7 +434,7 @@ class Qwen3ForCausalLM(Qwen3PreTrainedModel, GenerationMixin):
 
     def compute_loss(self, logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         logits = logits.float()
-        loss = F.cross_entropy(logits, labels, ignore_index=-100, reduction="mean")
+        loss = F.cross_entropy(logits, labels, ignore_index=-100, reduction="sum" if getattr(self, "token_scaled_loss", False) else "mean")
         return loss
 
     @can_return_tuple
@@ -497,42 +497,37 @@ class Qwen3ForCausalLM(Qwen3PreTrainedModel, GenerationMixin):
         slice_indices = slice(-logits_to_keep, None) if isinstance(logits_to_keep, int) else logits_to_keep
         logits = self.lm_head(hidden_states[:, slice_indices, :])
 
-        print("logits.shape: %s, labels.shape: %s" % (logits.shape, labels.shape), flush=True)
-        input("Press Enter to continue...") # Pause execution and inspect the logits
-
         loss = None
         if labels is not None:
-            loss = self.loss_function(logits=logits, labels=labels, vocab_size=self.config.vocab_size, **kwargs)
-            print("loss (ref): %s" % loss, flush=True)
-            input("Press Enter to continue...") # Pause execution and inspect the loss
-
-            if getattr(self, "token_scaled_loss", False):
-                raise NotImplementedError("token_scaled_loss is not implemented yet.")
+            logits = logits[..., :-1, :]
+            logits = logits.reshape(-1, logits.size(-1))
+            labels = labels[..., 1:]
+            labels = labels.reshape(-1)
+            # Blockwise loss computation with checkpointing to save memory for long sequences.
             logit_block_size = int(os.environ.get("LOGIT_BLOCK_SIZE", 0))
             if logit_block_size > 0:
-                logits = logits[..., :-1, :]
-                logits = logits.reshape(-1, logits.size(-1))
-                labels = labels[..., 1:]
-                labels = labels.reshape(-1)
-                loss = self.compute_loss(logits, labels)
-                print("loss (new-0): %s" % loss, flush=True)
+                loss = 0.0
                 logits_blocks = torch.split(logits, logit_block_size, dim=0)
                 labels_blocks = torch.split(labels, logit_block_size, dim=0)
-                loss = 0.0
-                valid_labels = (labels != -100).sum()
-                for logits_block, labels_block in zip(logits_blocks, labels_blocks):
-                    block_valid_labbels = (labels_block != -100).sum()
-                    weight = block_valid_labbels / valid_labels
-                    loss = loss + weight * torch.utils.checkpoint.checkpoint(self.compute_loss, logits_block, labels_block, use_reentrant=False)
-                print("loss (new-1): %s" % loss, flush=True)
-                input("Press Enter to continue...") # Pause execution and inspect the loss after block-wise computation
-
-        input("Press Enter to continue...") # Pause execution before returning
+                # The loss is either averaged or summed depending on the token_scaled_loss attribute.
+                if getattr(self, "token_scaled_loss", False):
+                    for logits_block, labels_block in zip(logits_blocks, labels_blocks):
+                        partial = torch.utils.checkpoint.checkpoint(self.compute_loss, logits_block, labels_block, use_reentrant=False)
+                        loss = loss + partial
+                else:
+                    valid_labels = (labels != -100).sum()
+                    for logits_block, labels_block in zip(logits_blocks, labels_blocks):
+                        block_valid_labbels = (labels_block != -100).sum()
+                        weight = block_valid_labbels / valid_labels
+                        partial = torch.utils.checkpoint.checkpoint(self.compute_loss, logits_block, labels_block, use_reentrant=False)
+                        loss = loss + weight * partial
+            else:
+                loss = self.compute_loss(logits, labels)
 
         return CausalLMOutputWithPast(
             loss=loss,
             logits=logits,
             past_key_values=outputs.past_key_values,
             hidden_states=outputs.hidden_states,
-            attentions=outputs.attentions,
+            attentions=outputs.attentions, 
         )
