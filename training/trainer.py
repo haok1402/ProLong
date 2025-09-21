@@ -338,6 +338,14 @@ class Trainer(HFTrainer):
 
         inputs = self.get_sequence_parallel_inputs(inputs)
 
+        # Qwen3ForCausalLM requires the batch dimension.
+        if "input_ids" in inputs:
+            input_ids = inputs["input_ids"]
+            inputs["input_ids"] = input_ids.unsqueeze(0)
+        if "labels" in inputs:
+            labels = inputs["labels"]
+            inputs["labels"] = labels.unsqueeze(0)
+
         try:
             outputs = model(**inputs, use_cache=False)
         except Exception as e:

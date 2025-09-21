@@ -7,13 +7,12 @@ import transformers
 import functools
 
 from transformers import (
-    AutoConfig,
     AutoTokenizer,
     HfArgumentParser,
     set_seed,
 )
 
-from training.modeling_flash_llama import LlamaForCausalLM
+from training.modeling_flash_qwen3 import Qwen3Config, Qwen3ForCausalLM
 from training.trainer import Trainer, TrainingArguments
 from training.dataset import build_dataset, DataCollator, DataArguments
 from training.dataset import logger as dataset_logger
@@ -139,7 +138,7 @@ def main():
         revision=script_args.model_revision,
         use_auth_token=True if script_args.use_auth_token else None,
     )
-    config = AutoConfig.from_pretrained(
+    config = Qwen3Config.from_pretrained(
         script_args.config_name or script_args.model_name_or_path,
         cache_dir=script_args.cache_dir,
         revision=script_args.model_revision,
@@ -158,17 +157,18 @@ def main():
     config.pad_token_id = 0
 
     if script_args.model_name_or_path:
-        model = LlamaForCausalLM.from_pretrained(
+        model = Qwen3ForCausalLM.from_pretrained(
             script_args.model_name_or_path,
             from_tf=bool(".ckpt" in script_args.model_name_or_path),
             config=config,
             cache_dir=script_args.cache_dir,
             revision=script_args.model_revision,
             use_auth_token=True if script_args.use_auth_token else None,
+            torch_dtype=torch.bfloat16,
         )
     else:
-        logger.warning(f"Initializing new LlamaForCausalLM from scratch")
-        model = LlamaForCausalLM(config)
+        logger.warning(f"Initializing new Qwen3ForCausalLM from scratch")
+        model = Qwen3ForCausalLM(config, torch_dtype=torch.bfloat16)
 
     if script_args.tokenizer_name is not None and script_args.model_name_or_path != script_args.tokenizer_name:
         model.resize_token_embeddings(len(tokenizer))

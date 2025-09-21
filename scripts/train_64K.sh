@@ -6,8 +6,8 @@
 #SBATCH --mem=400G
 #SBATCH -c 32
 
-# !!!! Load your own environment here !!!! #
-# !!!! Load your own environment here !!!! #
+source scripts/activate.sh
+MODEL=Qwen/Qwen3-0.6B; DATASET=datasets/Qwen3/long-context-65536; FSDP=0
 
 # Fine-tune from this model 
 model=${MODEL:-meta-llama/Meta-Llama-3-8B-Instruct}
@@ -141,7 +141,9 @@ base_arguments=(
     --remove_unused_columns false
     --ddp_find_unused_parameters false
 
-    --per_device_max_tokens 65536
+    # --per_device_max_tokens 16384
+    --per_device_max_tokens 32768
+    # --per_device_max_tokens 65536
 
     # --torch_compile
     --cuda_empty_cache
