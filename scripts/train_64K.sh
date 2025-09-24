@@ -7,7 +7,19 @@
 #SBATCH -c 32
 
 source scripts/activate.sh
-MODEL=Qwen/Qwen3-0.6B; DATASET=datasets/Qwen3/long-context-65536; FSDP=0; SAVE=15
+
+# Use Qwen3-0.6B. A small model, so FSDP is not necessary.
+# We train 4B tokens in one day on 8XH100 GPUs.
+MODEL=Qwen/Qwen3-0.6B; FSDP=0
+DATASET=datasets/Qwen3/long-context-65536; STEPS=1000
+
+# Following ablations for position extrapolation in B.1 of the paper,
+# Context length increases from 32K to 64K, t = 2. Attention head dimension d = 1024 / 16 = 64.
+# As a result, the scale factor for frequency base is t ^ (d / (d - 2)) = 2.045.
+# The original RoPE theta is 1e6 for Qwen3-0.6B, so we set the new theta as 2e6.
+# However, the paper notices further doubling the scale factor may lead to better performance.
+# As a result, we keep the new theta as 4e6 for 64K context length extension on Qwen3-0.6B.
+ROPE_THETA=4000000
 
 # Fine-tune from this model 
 model=${MODEL:-meta-llama/Meta-Llama-3-8B-Instruct}
@@ -100,7 +112,7 @@ echo "slurm_nodelist=${SLURM_NODELIST} num_nodes=${num_nodes} master_addr=${mast
 export OMP_NUM_THREADS=$num_gpus
 export WANDB_PROJECT="prolong"
 export WANDB_DIR=$out_dir
-export WANDB_MODE="offline" # We turn off wandb online sync by default
+export WANDB_MODE="online" # We turn off wandb online sync by default
 export TOKENIZERS_PARALLELISM=true
 
 
@@ -146,7 +158,7 @@ base_arguments=(
 
     # --torch_compile
     --cuda_empty_cache
-    --config_overrides "rope_theta=8000000"
+    --config_overrides "rope_theta=$ROPE_THETA"
 )
 
 
