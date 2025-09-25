@@ -51,7 +51,7 @@ warmup=${WARMUP:-0.1}
 suffix=${SUFFIX:-""} # for model saving name
 
 
-run_name="lcft_$(basename $model)_$(basename $dataset)_${domains_name}_bsz${bsz}_steps${steps}_lr${lr}_warmup${warmup}${suffix}"
+run_name="lcft_$(basename $model)_$(basename $dataset)_${domains_name}_bsz${bsz}_steps${steps}_lr${lr}_warmup${warmup}${suffix}_rope${ROPE_THETA}"
 out_dir="checkpoints/$run_name"
 
 if [ -z "$CUDA_VISIBLE_DEVICES" ]; then
