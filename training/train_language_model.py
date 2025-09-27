@@ -13,6 +13,7 @@ from transformers import (
 )
 
 from training.modeling_flash_qwen3 import Qwen3Config, Qwen3ForCausalLM
+from training.modeling_flash_qwen3 import replace_attention
 from training.trainer import Trainer, TrainingArguments
 from training.dataset import build_dataset, DataCollator, DataArguments
 from training.dataset import logger as dataset_logger
@@ -89,6 +90,8 @@ class ScriptArguments:
     tokenized_mds_test: List[str] = field(default_factory=list, metadata={"help": "Paths to tokenized test datasets in MDS format"})
 
     token_scaled_loss: bool = field(default=False, metadata={"help": "Whether to re-scale the loss by the number of valid training tokens instead of averaging loss across sequences and devices. This should be turned on for instruction tuning, especially when using synthetic data, as the valid training tokens vary across devices."})
+
+    use_native_sparse_attention: bool = field(default=False, metadata={"help": "Whether to use native sparse attention for training long context."})
 
 
 def main():
@@ -172,6 +175,16 @@ def main():
 
     if script_args.tokenizer_name is not None and script_args.model_name_or_path != script_args.tokenizer_name:
         model.resize_token_embeddings(len(tokenizer))
+
+    if script_args.use_native_sparse_attention:
+        override = dict()
+        override["compress_block_size"] = 4
+        override["compress_block_sliding_stride"] = 2
+        override["selection_block_size"] = 4
+        override["num_selected_blocks"] = 2
+        override["sliding_window_size"] = 2
+        model = replace_attention(config, model, override)
+        logger.info("Using native sparse attention for training long context.")
 
     logger.info(f"Model: {model}")
 

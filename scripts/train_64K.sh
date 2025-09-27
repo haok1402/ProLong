@@ -10,7 +10,7 @@ source scripts/activate.sh
 
 # Use Qwen3-0.6B. A small model, so FSDP is not necessary.
 # We train 4B tokens in one day on 8XH100 GPUs.
-MODEL=Qwen/Qwen3-0.6B; FSDP=0
+MODEL=Qwen/Qwen3-0.6B; FSDP=0; NSA=1
 DATASET=datasets/Qwen3/long-context-65536; STEPS=1000
 
 # Following ablations for position extrapolation in B.1 of the paper,
@@ -51,7 +51,7 @@ warmup=${WARMUP:-0.1}
 suffix=${SUFFIX:-""} # for model saving name
 
 
-run_name="lcft_$(basename $model)_$(basename $dataset)_${domains_name}_bsz${bsz}_steps${steps}_lr${lr}_warmup${warmup}${suffix}_rope${ROPE_THETA}"
+run_name="lcft_$(basename $model)_$(basename $dataset)_${domains_name}_bsz${bsz}_steps${steps}_lr${lr}_warmup${warmup}${suffix}_rope${ROPE_THETA}_nsa${NSA}"
 out_dir="checkpoints/$run_name"
 
 if [ -z "$CUDA_VISIBLE_DEVICES" ]; then
@@ -112,7 +112,7 @@ echo "slurm_nodelist=${SLURM_NODELIST} num_nodes=${num_nodes} master_addr=${mast
 export OMP_NUM_THREADS=$num_gpus
 export WANDB_PROJECT="prolong"
 export WANDB_DIR=$out_dir
-export WANDB_MODE="online" # We turn off wandb online sync by default
+export WANDB_MODE="offline" # We turn off wandb online sync by default
 export TOKENIZERS_PARALLELISM=true
 
 
@@ -178,6 +178,10 @@ base_arguments+=( --tokenized_mds_train )
 for domain in "${domains[@]}"; do
     base_arguments+=( $dataset/$domain )
 done
+
+if [ $NSA == 1 ]; then
+    base_arguments+=( --use_native_sparse_attention )
+fi
 
 base_arguments+=( $@ )
 
