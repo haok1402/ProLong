@@ -18,6 +18,7 @@ class Qwen3AttentionWithNSA(torch.nn.Module):
         kwargs["heads"] = config.num_attention_heads
         kwargs["kv_heads"] = config.num_key_value_heads
         kwargs["causal"] = True
+        kwargs["use_triton_kernel"] = True
         kwargs.update(override)
         sparse_attention = SparseAttention(**kwargs)
         # Copy the weights from the original attention module to the new sparse attention module.
