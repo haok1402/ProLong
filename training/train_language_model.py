@@ -178,11 +178,11 @@ def main():
 
     if script_args.use_native_sparse_attention:
         override = dict()
-        override["compress_block_size"] = 4
-        override["compress_block_sliding_stride"] = 2
-        override["selection_block_size"] = 4
-        override["num_selected_blocks"] = 2
-        override["sliding_window_size"] = 2
+        override["compress_block_size"] = 32
+        override["compress_block_sliding_stride"] = 16
+        override["selection_block_size"] = 64
+        override["num_selected_blocks"] = 16
+        override["sliding_window_size"] = 512
         model = replace_attention(config, model, override)
         logger.info("Using native sparse attention for training long context.")
 
