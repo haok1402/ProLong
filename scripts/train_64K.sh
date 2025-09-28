@@ -51,7 +51,13 @@ warmup=${WARMUP:-0.1}
 suffix=${SUFFIX:-""} # for model saving name
 
 
-run_name="lcft_$(basename $model)_$(basename $dataset)_${domains_name}_bsz${bsz}_steps${steps}_lr${lr}_warmup${warmup}${suffix}_rope${ROPE_THETA}_nsa${NSA}"
+run_name="lcft_$(basename $model)_$(basename $dataset)_${domains_name}_bsz${bsz}_steps${steps}_lr${lr}_warmup${warmup}${suffix}_rope${ROPE_THETA}"
+
+# Append the NSA tag if using native sparse attention.
+if [ $NSA == 1 ]; then
+    run_name="${run_name}_nsa"
+fi
+
 out_dir="checkpoints/$run_name"
 
 if [ -z "$CUDA_VISIBLE_DEVICES" ]; then
@@ -112,7 +118,7 @@ echo "slurm_nodelist=${SLURM_NODELIST} num_nodes=${num_nodes} master_addr=${mast
 export OMP_NUM_THREADS=$num_gpus
 export WANDB_PROJECT="prolong"
 export WANDB_DIR=$out_dir
-export WANDB_MODE="offline" # We turn off wandb online sync by default
+export WANDB_MODE="online" # We turn off wandb online sync by default
 export TOKENIZERS_PARALLELISM=true
 
 
@@ -154,8 +160,8 @@ base_arguments=(
     --remove_unused_columns false
     --ddp_find_unused_parameters false
 
-    # --per_device_max_tokens 32768
-    --per_device_max_tokens 65536
+    --per_device_max_tokens 32768
+    # --per_device_max_tokens 65536
 
     # --torch_compile
     --cuda_empty_cache
