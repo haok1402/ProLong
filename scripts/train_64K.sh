@@ -10,7 +10,7 @@ source scripts/activate.sh
 
 # Use Qwen3-0.6B. A small model, so FSDP is not necessary.
 # We train 4B tokens in one day on 8XH100 GPUs.
-MODEL=Qwen/Qwen3-0.6B; FSDP=0; NSA=1
+MODEL=Qwen/Qwen3-0.6B; FSDP=0; NSA=1; LR=1e-4
 DATASET=datasets/Qwen3/long-context-65536; STEPS=1000
 
 # Following ablations for position extrapolation in B.1 of the paper,
@@ -160,8 +160,8 @@ base_arguments=(
     --remove_unused_columns false
     --ddp_find_unused_parameters false
 
-    --per_device_max_tokens 32768
-    # --per_device_max_tokens 65536
+    # --per_device_max_tokens 32768
+    --per_device_max_tokens 65536
 
     # --torch_compile
     --cuda_empty_cache

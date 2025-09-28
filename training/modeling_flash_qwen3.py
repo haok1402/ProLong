@@ -725,7 +725,7 @@ class Qwen3ForCausalLM(Qwen3PreTrainedModel, GenerationMixin):
 # From full attention to native sparse attention
 # -----------------------------------------------------------------------------
 
-from typing import Dict
+from typing import Dict, List
 
 from native_sparse_attention_pytorch import SparseAttention
 
@@ -767,7 +767,8 @@ class Qwen3AttentionWithNSA(torch.nn.Module):
 
 
 def replace_attention(config: Qwen3Config, module: Qwen3ForCausalLM, override: Dict[str, int]) -> Qwen3ForCausalLM:
-    for layer in module.model.layers:
+    for i, layer in enumerate(module.model.layers):
+        if i % 4 != 3: continue # only replace every 4th layer for now
         assert hasattr(layer, "self_attn")
         assert isinstance(layer.self_attn, Qwen3Attention)
         layer.self_attn = Qwen3AttentionWithNSA(config, layer.self_attn, override)
