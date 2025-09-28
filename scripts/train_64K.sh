@@ -160,8 +160,8 @@ base_arguments=(
     --remove_unused_columns false
     --ddp_find_unused_parameters false
 
-    # --per_device_max_tokens 32768
-    --per_device_max_tokens 65536
+    --per_device_max_tokens 32768
+    # --per_device_max_tokens 65536
 
     # --torch_compile
     --cuda_empty_cache

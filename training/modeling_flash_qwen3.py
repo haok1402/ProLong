@@ -768,7 +768,7 @@ class Qwen3AttentionWithNSA(torch.nn.Module):
 
 def replace_attention(config: Qwen3Config, module: Qwen3ForCausalLM, override: Dict[str, int]) -> Qwen3ForCausalLM:
     for i, layer in enumerate(module.model.layers):
-        if i != 13: continue # replace only the 14th layer.
+        if i % 4 != 3: continue # replace every 4th layer
         assert hasattr(layer, "self_attn")
         assert isinstance(layer.self_attn, Qwen3Attention)
         layer.self_attn = Qwen3AttentionWithNSA(config, layer.self_attn, override)
